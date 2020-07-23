@@ -1,0 +1,11 @@
+[
+    [
+        "annuaire-de-leducation",
+        [
+            null,
+            {
+                "error": "'str' object has no attribute 'seek'"
+            }
+        ]
+    ]
+]

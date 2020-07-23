@@ -1,4 +1,4 @@
-name: csv_deploy3
+name: csv_deploy
 channels:
   - conda-forge
   - defaults
