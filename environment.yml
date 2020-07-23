@@ -49,7 +49,6 @@ dependencies:
   - xz=5.2.4=h14c3975_4
   - zlib=1.2.11=h7b6447c_3
   - pip:
-    - csv-detective==0.2.1
     - argopt==0.5.0
     - cchardet==2.1.4
     - chardet==3.0.4
