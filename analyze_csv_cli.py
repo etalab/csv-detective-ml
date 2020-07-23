@@ -19,14 +19,14 @@ import json
 
 import joblib
 from argopt import argopt
-from explore_csv import routine
+from csv_detective.explore_csv import routine
 from joblib import Parallel, delayed
 from tqdm import tqdm
 import os
 import logging
 
 from prediction import get_columns_ML_prediction, get_columns_types
-from detect_fields_ml.utils_ml.files_io import get_files
+from csv_detective_ml.utils_ml.files_io import get_files
 
 ML_MODEL = None
 logger = logging.getLogger()
@@ -43,7 +43,6 @@ def analyze_csv(file_path, analysis_type="both", pipeline=None, num_rows=500, re
         if analysis_type == "both" or analysis_type == "rule":
             logger.info(f"Starting vanilla CSV Detective on file {file_path}")
             dict_result = routine(file_path, num_rows=num_rows)
-
             if "columns" in dict_result:
                 dict_result["columns"] = {k.strip('"'): v for k, v in dict_result["columns"].items()}
                 dict_result["columns_rb"] = dict_result["columns"]
@@ -84,6 +83,7 @@ if __name__ == '__main__':
         logger.info("Loading ML model...")
         ML_MODEL = joblib.load('csv_detective/detect_fields_ml/models/model.joblib')
 
+    
     if os.path.exists(csv_folder_path):
         if os.path.isfile(csv_folder_path):
             list_files = [csv_folder_path]
@@ -93,18 +93,17 @@ if __name__ == '__main__':
         logger.info("No file/folder found to analyze. Exiting...")
         exit(1)
 
+
     if n_jobs and n_jobs > 1:
         csv_info = Parallel(n_jobs=n_jobs)((file_path.split("/")[-1].split(".csv")[0],
-                                            delayed(routine)(file_path, analysis_type=analysis_type,
+                                            delayed(analyze_csv)(file_path, analysis_type=analysis_type,
                                                              num_rows=num_rows,
-                                                             model_ML=ML_MODEL,
                                                              date_process=date_process))
                                            for file_path in tqdm(list_files))
     else:
         csv_info = [(file_path.split("/")[-1].split(".csv")[0],
-                     routine(file_path, analysis_type=analysis_type,
+                     analyze_csv(file_path, analysis_type=analysis_type,
                              num_rows=num_rows,
-                             model_ML=ML_MODEL,
                              date_process=date_process))
                     for file_path in tqdm(list_files)]
 
