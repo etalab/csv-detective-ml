@@ -1,2 +1,3 @@
 csv_detective
 tests/out/
+__pycache__/
