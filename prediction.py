@@ -115,6 +115,7 @@ def get_columns_probs(y_true, y_pred, y_pred_proba, csv_info):
     # This will give us the name of the csv column
     summed_probas_matrix = np.stack([np.sum(np.stack(col_probs, axis=0), axis=0)
                                      for col_probs in per_header_probas.values()], axis=0)
+    # scale to sum=1 to recreate the probability distributions (always along the rows)
     summed_probas_matrix = summed_probas_matrix / summed_probas_matrix.sum(axis=1)[:, np.newaxis]
 
     csv_column_names = per_header_probas.keys()
@@ -123,9 +124,7 @@ def get_columns_probs(y_true, y_pred, y_pred_proba, csv_info):
     for j, type_detected in enumerate(y_true):
         column_name_scores_list = []
         for i, column_name in enumerate(csv_column_names):
-            inner_dict = {}
-            inner_dict["colonne"] = column_name
-            inner_dict["score_ml"] = summed_probas_matrix[i, j]
+            inner_dict = {"colonne": column_name, "score_ml": summed_probas_matrix[i, j]}
             column_name_scores_list.append(inner_dict)
         full_report[type_detected] = column_name_scores_list
     return full_report
