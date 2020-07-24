@@ -3,7 +3,7 @@ from collections import defaultdict, Counter
 import numpy as np
 from detection import detect_encoding, detect_separator, detect_headers, parse_table
 from sklearn.base import BaseEstimator, TransformerMixin
-
+from sklearn.preprocessing import scale
 
 class PredictCSVColumnInfoExtractor(BaseEstimator, TransformerMixin):
     """Extract the columns from a csv into the required structures in order to use
@@ -97,11 +97,42 @@ def get_columns_ML_prediction(csv_path, model, csv_metadata=None, num_rows=500):
         return
 
     y_pred = model.predict(csv_info)
-    return y_pred, csv_info
+    y_pred_proba = None
+    if hasattr(model, "predict_proba"):
+        y_pred_proba = model.predict_proba(csv_info)
+    return y_pred, y_pred_proba, csv_info
+
+def get_columns_probs(y_true, y_pred, y_pred_proba, csv_info):
+    all_headers = csv_info["all_headers"]
+    assert (len(y_pred_proba) == len(all_headers))
+    per_header_probas = defaultdict(list)
+
+    # get all the proba matrix rows corresponding to each header value
+    for i, column_name in enumerate(all_headers):
+        per_header_probas[column_name].append(y_pred_proba[i])
+    
+    # now sum the rows and find for each col, the index (i) of the larger value. 
+    # This will give us the name of the csv column
+    summed_probas_matrix = np.stack([np.sum(np.stack(col_probs, axis=0), axis=0)
+                                     for col_probs in per_header_probas.values()], axis=0)
+    summed_probas_matrix = summed_probas_matrix / summed_probas_matrix.sum(axis=1)[:, np.newaxis]
+
+    csv_column_names = per_header_probas.keys()
+    full_report = {}
+    assert summed_probas_matrix.shape == (len(csv_column_names), len(y_true))
+    for j, type_detected in enumerate(y_true):
+        column_name_scores_list = []
+        for i, column_name in enumerate(csv_column_names):
+            inner_dict = {}
+            inner_dict["colonne"] = column_name
+            inner_dict["score_ml"] = summed_probas_matrix[i, j]
+            column_name_scores_list.append(inner_dict)
+        full_report[type_detected] = column_name_scores_list
+    return full_report
 
 
 def get_columns_types(y_pred, csv_info):
-    def get_most_frequent(header, list_predictions):
+    def get_most_frequent(list_predictions):
         type_, counts = Counter(list_predictions).most_common(1)[0]
         # u, counts = np.unique(list_predictions, return_counts=True)
         # print(u, counts)
@@ -109,15 +140,15 @@ def get_columns_types(y_pred, csv_info):
 
     assert (len(y_pred) == len(csv_info["all_headers"]))
     dict_columns = defaultdict(list)
-    head_pred = list(zip(csv_info["all_headers"], y_pred))
+    header_pred = list(zip(csv_info["all_headers"], y_pred))
     per_header_predictions = defaultdict(list)
-    for v in head_pred:
+    for v in header_pred:
         per_header_predictions[v[0]].append(v[1])
     for header in csv_info["headers"]:
         if not per_header_predictions[header.lower()]:
             continue
         else:
-            most_freq_label = get_most_frequent(header, per_header_predictions[header.lower()])
+            most_freq_label = get_most_frequent(per_header_predictions[header.lower()])
             if most_freq_label == "O":
                 continue
             dict_columns[header].append(most_freq_label)

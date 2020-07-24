@@ -25,10 +25,10 @@ from tqdm import tqdm
 import os
 import logging
 
-from prediction import get_columns_ML_prediction, get_columns_types
+from prediction import get_columns_ML_prediction, get_columns_types, get_columns_probs
 from csv_detective_ml.utils_ml.files_io import get_files
 
-ML_MODEL = None
+MODEL_ML = None
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
@@ -36,7 +36,7 @@ logger.addHandler(logging.StreamHandler())
 TODAY = str(datetime.datetime.today()).split()[0]
 
 
-def analyze_csv(file_path, analysis_type="both", pipeline=None, num_rows=500, resourceID=None, date_process=TODAY):
+def analyze_csv(file_path, analysis_type="both", model_ml=None, num_rows=500, resourceID=None, date_process=TODAY):
     logger.info(" csv_detective on {}".format(file_path))
     final_id = resourceID
     try:
@@ -53,12 +53,16 @@ def analyze_csv(file_path, analysis_type="both", pipeline=None, num_rows=500, re
             dict_result = routine(file_path, num_rows=num_rows, user_input_tests=None)
 
         if analysis_type != "rule":
-            assert pipeline is not None
-            y_pred, csv_info = get_columns_ML_prediction(file_path, pipeline,
-                                                         dict_result, num_rows=num_rows)
+            assert model_ml is not None
+            y_true = model_ml.classes_
+            y_pred, y_pred_proba, csv_info = get_columns_ML_prediction(file_path, model_ml,
+                                                                       dict_result, num_rows=num_rows)
+
             dict_result["columns_ml"] = get_columns_types(y_pred, csv_info)
-
-
+            if y_pred_proba is not None:
+                dict_result["columns_ml_prob"] = get_columns_probs(y_true, y_pred, y_pred_proba, csv_info)
+            else:
+                logger.info("Probabilities could not be computed with the chosen model")
     except Exception as e:
         logger.info("Analyzing file {0} failed with {1}".format(file_path, e))
         return final_id, {"error": "{}".format(e)}
@@ -81,9 +85,8 @@ if __name__ == '__main__':
     analysis_name = os.path.basename(os.path.dirname(csv_folder_path))
     if analysis_type != "rule":
         logger.info("Loading ML model...")
-        ML_MODEL = joblib.load('csv_detective/detect_fields_ml/models/model.joblib')
+        MODEL_ML = joblib.load('csv_detective_ml/models/model.joblib')
 
-    
     if os.path.exists(csv_folder_path):
         if os.path.isfile(csv_folder_path):
             list_files = [csv_folder_path]
@@ -93,18 +96,18 @@ if __name__ == '__main__':
         logger.info("No file/folder found to analyze. Exiting...")
         exit(1)
 
-
     if n_jobs and n_jobs > 1:
         csv_info = Parallel(n_jobs=n_jobs)((file_path.split("/")[-1].split(".csv")[0],
                                             delayed(analyze_csv)(file_path, analysis_type=analysis_type,
-                                                             num_rows=num_rows,
-                                                             date_process=date_process))
+                                                                 num_rows=num_rows,
+                                                                 date_process=date_process))
                                            for file_path in tqdm(list_files))
     else:
         csv_info = [(file_path.split("/")[-1].split(".csv")[0],
                      analyze_csv(file_path, analysis_type=analysis_type,
-                             num_rows=num_rows,
-                             date_process=date_process))
+                                 model_ml=MODEL_ML,
+                                 num_rows=num_rows,
+                                 date_process=date_process))
                     for file_path in tqdm(list_files)]
 
         # csv_info = [analyze_csv(f, analysis_type=analysis_type, pipeline=ML_PIPELINE, num_rows=num_rows,
