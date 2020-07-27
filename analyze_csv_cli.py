@@ -26,7 +26,6 @@ import os
 import logging
 
 from csv_detective_ml.explore_csv_ml import routine_ml, align_reports
-from prediction import get_columns_classes, classes2types, probabilities2scored_types
 from csv_detective_ml.utils_ml.files_io import get_files
 
 MODEL_ML = None
