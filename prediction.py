@@ -104,7 +104,7 @@ def get_columns_classes(csv_path, model, csv_metadata=None, num_rows=500, return
     return y_pred, y_pred_proba, csv_info
 
 
-def probabilities2scored_types(y_true, y_pred, y_pred_proba, csv_info):
+def probabilities2scored_types(y_true, y_pred_proba, csv_info):
     all_headers = csv_info["all_headers"]
     assert (len(y_pred_proba) == len(all_headers))
     per_header_probas = defaultdict(list)

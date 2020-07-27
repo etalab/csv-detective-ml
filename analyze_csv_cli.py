@@ -25,7 +25,7 @@ from tqdm import tqdm
 import os
 import logging
 
-from csv_detective_ml.explore_csv_ml import routine_ml, align_reports
+from csv_detective_ml.explore_csv_ml import routine_ml, join_reports
 from csv_detective_ml.utils_ml.files_io import get_files
 
 MODEL_ML = None
@@ -55,15 +55,16 @@ def analyze_csv(file_path, model_ml=None, num_rows=500, date_process=TODAY,
         # combine rb and ml dicts into a single one
         if output_mode == "ALL" and return_probabilities:
             if "columns" in dict_result and "columns_ml" in dict_result:
-                dict_result["columns"] = align_reports(dict_rb=dict_result["columns"],
-                                                       dict_ml=dict_result["columns_ml"])
-                dict_result.pop("columns_ml")
+                dict_result["columns"] = join_reports(dict_rb=dict_result["columns"],
+                                                      dict_ml=dict_result["columns_ml_probas"])
+                dict_result.pop("columns_ml_probas")
             else:
                 logger.error(f"Could not create single ALL table because either RB or ML FULL results"
                              f"are missing...")
 
     except Exception as e:
         logger.info("Analyzing file {0} failed with {1}".format(file_path, e))
+        raise
         return {"error": "{}".format(e)}
 
     dict_result['analysis_date'] = date_process
@@ -119,4 +120,4 @@ if __name__ == '__main__':
     logger.info("Saving info to JSON")
 
     json.dump(csv_info, open(f"{dest_folder}/{date_process}.json", "w"),
-              indent=4)
+              indent=4, ensure_ascii=False)

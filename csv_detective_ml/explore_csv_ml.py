@@ -14,13 +14,13 @@ def routine_ml(csv_detective_results, file_path, model_ml, num_rows=500, return_
                                                          return_probas=return_probabilities)
 
     if return_probabilities and y_pred_proba.size > 0:
-        csv_detective_results["columns_ml"] = probabilities2scored_types(y_true, y_pred, y_pred_proba, csv_info)
-    elif y_pred.size > 0:
+        csv_detective_results["columns_ml_probas"] = probabilities2scored_types(y_true, y_pred_proba, csv_info)
+    if y_pred.size > 0:
         csv_detective_results["columns_ml"] = classes2types(y_pred, csv_info)
     return csv_detective_results
 
 
-def align_reports(dict_rb: dict, dict_ml: dict):
+def join_reports(dict_rb: dict, dict_ml: dict):
     """
     Aligns both results from the rule based system with the machine learning system into a
     single dict. This new dict is a dict of lists, where the outer keys are the types. Each type has
@@ -67,8 +67,8 @@ def align_reports(dict_rb: dict, dict_ml: dict):
             for col_dict_rb in rb_list:
                 col_name_rb = col_dict_rb["colonne"]
                 for col_dict_ml in ml_list:
-                    if col_dict_ml["colonne"] == col_name_rb.lower():
-                        col_dict_both = {**col_dict_rb, **col_dict_ml}
+                    if col_dict_ml["colonne"].lower() == col_name_rb.lower():
+                        col_dict_both = {**col_dict_ml, **col_dict_rb}
                         both_lists.append(dict(col_dict_both))
                         break
             full_report[t] = both_lists
