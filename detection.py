@@ -119,7 +119,7 @@ def parse_table(the_file, encoding, sep, num_rows, random_state=42):
             encoding = 'ISO-8859-1'
         try:
             table = pd.read_csv(
-                the_file,
+                the_file.name,
                 sep=sep,
                 dtype='unicode',
                 encoding=encoding

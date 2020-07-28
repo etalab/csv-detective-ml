@@ -2,7 +2,9 @@ import logging
 from collections import defaultdict, Counter
 
 import numpy as np
-from detection import detect_encoding, detect_separator, detect_headers, parse_table
+
+from csv_detective.detection import parse_table
+from detection import detect_encoding, detect_separator, detect_headers
 from sklearn.base import BaseEstimator, TransformerMixin
 
 logger = logging.getLogger()

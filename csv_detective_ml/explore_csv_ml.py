@@ -1,8 +1,32 @@
 import logging
-
+import pandas as pd
 from prediction import get_columns_classes, classes2types, probabilities2scored_types
 
 logger = logging.getLogger()
+
+def _check_full_report(dict_result: dict, logger):
+    """
+    Check that the full report makes sens. For now, only check that we have the same number of columns in
+    each type
+    Parameters
+    ----------
+    dict_result
+
+    Returns
+    -------
+
+    """
+    try:
+        columns = dict_result["columns"]
+        type_nb_cols = {t: len(cols) for t, cols in columns.items()}
+        if len(set(type_nb_cols.values())) > 1:
+            # different number of columns
+            for t, nb_cols in type_nb_cols.items():
+                logger.info(f"Type {t} has {nb_cols} columns")
+        else:
+            print("Everything seems fine :/")
+    except:
+        return
 
 
 def routine_ml(csv_detective_results, file_path, model_ml, num_rows=500, return_probabilities=False):
@@ -62,25 +86,17 @@ def join_reports(dict_rb: dict, dict_ml: dict):
         if t in dict_ml:
             ml_list = dict_ml[t]
         if rb_list and ml_list:
-            both_lists = []
-            # join lists
-            for col_dict_rb in rb_list:
-                col_name_rb = col_dict_rb["colonne"]
-                for col_dict_ml in ml_list:
-                    if col_dict_ml["colonne"].lower() == col_name_rb.lower():
-                        col_dict_both = {**col_dict_ml, **col_dict_rb}
-                        both_lists.append(dict(col_dict_both))
-                        break
-            full_report[t] = both_lists
+	    # some black magic to merge both tables
+            rb_df = pd.DataFrame(rb_list).replace(False, 0.0)
+            original_names = list(rb_df["colonne"].values)
+            rb_df["colonne"] = rb_df["colonne"].str.lower()
+            ml_df = pd.DataFrame(ml_list).replace(False, 0.0)
+            merged_df = pd.merge(rb_df, ml_df, on="colonne", how="left").fillna("0.0")
+            merged_df.iloc[:len(original_names), 0] = original_names
+            merged_df = merged_df.replace(False, 0.0)
+            full_report[t] = merged_df.to_dict("records")
         else:
             full_report[t] = rb_list or ml_list
-            # TODO: fix this, should be dealt with at csv_detective!  dropping unnamed columns :/
-            filtered_list = []
-            for d in full_report[t]:
-                if "Unnamed" not in d["colonne"]:
-                    filtered_list.append(d)
-
-            full_report[t] = filtered_list
             # add empty values to score_ml/score_rb
             completed_list = []
             for d in full_report[t]:

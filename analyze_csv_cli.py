@@ -25,7 +25,7 @@ from tqdm import tqdm
 import os
 import logging
 
-from csv_detective_ml.explore_csv_ml import routine_ml, join_reports
+from csv_detective_ml.explore_csv_ml import routine_ml, join_reports, _check_full_report
 from csv_detective_ml.utils_ml.files_io import get_files
 
 MODEL_ML = None
@@ -64,7 +64,6 @@ def analyze_csv(file_path, model_ml=None, num_rows=500, date_process=TODAY,
 
     except Exception as e:
         logger.info("Analyzing file {0} failed with {1}".format(file_path, e))
-        raise
         return {"error": "{}".format(e)}
 
     dict_result['analysis_date'] = date_process
@@ -118,6 +117,7 @@ if __name__ == '__main__':
             csv_info.append((dataset_id, analysis_output))
 
     logger.info("Saving info to JSON")
-
+    # check that we have a good result
+    #_check_full_report(analysis_output, logger)
     json.dump(csv_info, open(f"{dest_folder}/{date_process}.json", "w"),
               indent=4, ensure_ascii=False)
