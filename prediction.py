@@ -154,12 +154,3 @@ def classes2types(y_pred, csv_info):
                 continue
             dict_columns[header].append(most_freq_label)
     return dict_columns
-
-
-if __name__ == '__main__':
-    import joblib
-
-    pp = joblib.load("models/model.joblib")
-    y_pred, csv_info = get_columns_classes("/data/datagouv/csv_top/af637e2e-64cc-447f-afc4-7376be8d5eb0.csv", model=pp)
-    dict_columns = classes2types(y_pred, csv_info)
-    print(dict_columns)
