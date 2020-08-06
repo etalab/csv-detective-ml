@@ -63,8 +63,7 @@ def analyze_csv(file_path, model_ml=None, num_rows=500, date_process=TODAY,
                                                       dict_ml=dict_result["columns_ml_probas"])
                 dict_result.pop("columns_ml_probas")
             else:
-                logger.error(f"Could not create single ALL table because either RB or ML FULL results"
-                             f"are missing...")
+                logger.error(f"Only ML or RULE analysis is ongoing...")
 
     except Exception as e:
         logger.info("Analyzing file {0} failed with {1}".format(file_path, e))
