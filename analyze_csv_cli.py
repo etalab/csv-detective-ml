@@ -9,7 +9,7 @@ Arguments:
     <i>                                An input directory with csvs(if dir it will convert all txt files inside).
     <j>                                An output directory with csvs(if dir it will convert all txt files inside).
     <k>                                Date to process
-    --rb_ml_analysis                   If set, compute both rule-based and machine earning column type detection analysis on the csv
+    --rb_ml_analysis METHOD            If set, compute both rule-based and machine earning column type detection analysis on the csv
     --num_files NFILES                 Number of files (CSVs) to work with [default: 10:int]
     --num_rows NROWS                   Number of rows per file to use [default: 500:int]
     --num_cores=<n> CORES                  Number of cores to use [default: 1:int]
@@ -37,19 +37,23 @@ TODAY = str(datetime.datetime.today()).split()[0]
 
 
 def analyze_csv(file_path, model_ml=None, num_rows=500, date_process=TODAY,
-                do_both_analysis="both",
+                do_both_analysis="ml",
                 return_probabilities=True, output_mode="ALL"):
     logger.info(" csv_detective on {}".format(file_path))
     try:
         if do_both_analysis:
             logger.info(f"Starting vanilla CSV Detective on file {file_path}")
-            dict_result = routine(file_path, num_rows=num_rows, output_mode="ALL")
+            if do_both_analysis !="ml":
+                dict_result = routine(file_path, num_rows=num_rows, output_mode="ALL")
+            else:
+                dict_result = routine(file_path, num_rows=num_rows, user_input_tests=None)
         else:
             # Get ML tagging
             logger.info(f"Starting ML CSV Detective on file {file_path}")
             dict_result = routine(file_path, num_rows=num_rows, user_input_tests=None)
 
-        dict_result = routine_ml(csv_detective_results=dict_result, file_path=file_path,
+        if do_both_analysis != 'rule':
+            dict_result = routine_ml(csv_detective_results=dict_result, file_path=file_path,
                                  model_ml=model_ml, num_rows=500, return_probabilities=return_probabilities)
 
         # combine rb and ml dicts into a single one
@@ -59,8 +63,7 @@ def analyze_csv(file_path, model_ml=None, num_rows=500, date_process=TODAY,
                                                       dict_ml=dict_result["columns_ml_probas"])
                 dict_result.pop("columns_ml_probas")
             else:
-                logger.error(f"Could not create single ALL table because either RB or ML FULL results"
-                             f"are missing...")
+                logger.error(f"Only ML or RULE analysis is ongoing...")
 
     except Exception as e:
         logger.info("Analyzing file {0} failed with {1}".format(file_path, e))

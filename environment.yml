@@ -56,4 +56,5 @@ dependencies:
     - tqdm==4.35.0
     - unidecode==1.1.1
     - xgboost==0.90
+    - csv-detective==0.4.1
 
