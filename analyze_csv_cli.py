@@ -37,19 +37,23 @@ TODAY = str(datetime.datetime.today()).split()[0]
 
 
 def analyze_csv(file_path, model_ml=None, num_rows=500, date_process=TODAY,
-                do_both_analysis="both",
+                do_both_analysis="ml",
                 return_probabilities=True, output_mode="ALL"):
     logger.info(" csv_detective on {}".format(file_path))
     try:
         if do_both_analysis:
             logger.info(f"Starting vanilla CSV Detective on file {file_path}")
-            dict_result = routine(file_path, num_rows=num_rows, output_mode="ALL")
+            if do_both_analysis !="ml":
+                dict_result = routine(file_path, num_rows=num_rows, output_mode="ALL")
+            else:
+                dict_result = routine(file_path, num_rows=num_rows, user_input_tests=None)
         else:
             # Get ML tagging
             logger.info(f"Starting ML CSV Detective on file {file_path}")
             dict_result = routine(file_path, num_rows=num_rows, user_input_tests=None)
 
-        dict_result = routine_ml(csv_detective_results=dict_result, file_path=file_path,
+        if do_both_analysis != 'rule':
+            dict_result = routine_ml(csv_detective_results=dict_result, file_path=file_path,
                                  model_ml=model_ml, num_rows=500, return_probabilities=return_probabilities)
 
         # combine rb and ml dicts into a single one
