@@ -9,7 +9,7 @@ Arguments:
     <i>                                An input directory with csvs(if dir it will convert all txt files inside).
     <j>                                An output directory with csvs(if dir it will convert all txt files inside).
     <k>                                Date to process
-    --rb_ml_analysis                   If set, compute both rule-based and machine earning column type detection analysis on the csv
+    --rb_ml_analysis METHOD            If set, compute both rule-based and machine earning column type detection analysis on the csv
     --num_files NFILES                 Number of files (CSVs) to work with [default: 10:int]
     --num_rows NROWS                   Number of rows per file to use [default: 500:int]
     --num_cores=<n> CORES                  Number of cores to use [default: 1:int]
